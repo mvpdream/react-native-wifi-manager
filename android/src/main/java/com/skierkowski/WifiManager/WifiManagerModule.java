@@ -26,11 +26,18 @@ import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.shell.MainReactPackage;
 import com.facebook.soloader.SoLoader;
 
+import android.app.Activity;
+import android.view.WindowManager;
+
 import java.util.Map;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class WifiManagerModule extends ReactContextBaseJavaModule {
+  
   public WifiManagerModule(ReactApplicationContext reactContext) {
     super(reactContext);
   }
@@ -40,22 +47,31 @@ public class WifiManagerModule extends ReactContextBaseJavaModule {
     return "WifiManager";
   }
 
-  @ReactMethod
+   @ReactMethod
   public void list(Callback successCallback, Callback errorCallback) {
     try {
       WifiManager mWifiManager = (WifiManager) getReactApplicationContext().getSystemService(Context.WIFI_SERVICE);
       List < ScanResult > results = mWifiManager.getScanResults();
-      WritableArray wifiArray =  Arguments.createArray();
+      //WritableArray wifiArray =  Arguments.createArray();
+      JSONArray wifiArray = new JSONArray();
       for (ScanResult result: results) {
+        JSONObject wifiObject = new JSONObject();
         if(!result.SSID.equals("")){
-          wifiArray.pushString(result.SSID);
+         try {
+					    wifiObject.put("SSID", result.SSID);
+					    wifiObject.put("BSSID", result.BSSID);
+					} catch (JSONException e) {
+					    errorCallback.invoke(e.getMessage());
+					}
+					wifiArray.put(wifiObject);
         }
       }
-      successCallback.invoke(wifiArray);
+      successCallback.invoke(wifiArray.toString());
     } catch (IllegalViewOperationException e) {
       errorCallback.invoke(e.getMessage());
     }
   }
+
 
   @ReactMethod
   public void connect(String ssid, String password) {
